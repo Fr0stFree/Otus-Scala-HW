@@ -174,7 +174,7 @@ object variance {
   case object None extends Option[Nothing]
 
   var animalOpt: Option[Animal] = None
-  var intOpt: Option[Int] = ???
+  var intOpt: Option[Int] = Some(42)
 
 
 
@@ -184,12 +184,15 @@ object variance {
    * Реализовать метод printIfAny, который будет печатать значение, если оно есть
    */
 
+  def printIfAny[T](opt: Option[T]): Unit = opt.map(println)
 
   /**
    *
    * Реализовать метод zip, который будет создавать Option от пары значений из 2-х Option
    */
 
+  def zip[A, B](optA: Option[A], optB: Option[B]): Option[(A, B)] = 
+    optA.flatMap(a => optB.map(b => (a, b)))
 
   /**
    *
@@ -197,6 +200,8 @@ object variance {
    * в случае если исходный не пуст и предикат от значения = true
    */
 
+  def filter[A](opt: Option[A], predicate: A => Boolean): Option[A] = 
+    opt.flatMap(elem => if (predicate(elem)) then Some(elem) else None)
  }
 
  object list {
@@ -210,7 +215,7 @@ object variance {
 
 
     sealed trait List[+T]{
-      def ::[TT >: T](elem: TT): List[TT] = ???
+      def ::[TT >: T](elem: TT): List[TT] = ru.otus.module1.list.::(elem, this)
     }
 
 
@@ -240,16 +245,28 @@ object variance {
       * Реализовать метод reverse который позволит заменить порядок элементов в списке на противоположный
       */
 
+      def reverse[A](list: List[A], accumulator: List[A] = Nil): List[A] = list match
+        case Nil => accumulator
+        case head :: tail => reverse(tail, head :: accumulator)
+
     /**
       *
       * Реализовать метод map для списка который будет применять некую ф-цию к элементам данного списка
       */
 
+      def map[A, B](func: A => B, list: List[A]): List[B] = list match
+        case Nil => Nil
+        case head :: tail => func(head) :: map(func, tail)
 
     /**
       *
       * Реализовать метод filter для списка который будет фильтровать список по некому условию
       */
+
+      def filter[A](predicate: A => Boolean, list: List[A]): List[A] = list match
+        case Nil => Nil
+        case head :: tail if predicate(head) => head :: filter(predicate, tail)
+        case _ :: tail => filter(predicate, tail)
 
     /**
       *
@@ -257,6 +274,7 @@ object variance {
       * где каждый элемент будет увеличен на 1
       */
 
+      def incList(list: List[Int]): List[Int] = map((number: Int) => number + 1, list)
 
     /**
       *
@@ -264,4 +282,5 @@ object variance {
       * где к каждому элементу будет добавлен префикс в виде '!'
       */
 
+      def shoutString(list: List[String]): List[String] = map((word: String) => "!".concat(word), list)
  }
