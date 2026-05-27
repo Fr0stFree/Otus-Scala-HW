@@ -6,16 +6,16 @@ object pattern_matching{
    * Сопоставление с типом
    */
 
-    val i: Any = List(10)
+  val i: Any = List(10)
 
-    i match {
-      case v: Int => println("Int")
-      case v: Double => println("Double")
-      case v: String => println("String")
-      case v: List[String] => println("List[String]")
-      case v: List[Int] => println("List[Int]")
-      case _ => println("Something else")
-    }
+  i match {
+    case v: Int => println("Int")
+    case v: Double => println("Double")
+    case v: String => println("String")
+    case v: List[String] => println("List[String]")
+    case v: List[Int] => println("List[Int]")
+    case _ => println("Something else")
+  }
 
 
 
@@ -123,92 +123,92 @@ object pattern_matching{
 
 
 
-
+  
   case class Employee(name: String, address: Address)
   case class Address(val street: String, val number: Int)
-
-
+  
+  
   case class Person(name: String, age: Int)
-
+  
   val p: Person = Person("Ivan", 22)
-
+  
   val Person(name, age) = p
 
 
-  /**
-   * Воспользовавшись сопоставлением напечатать номер из поля адрес
-   */
+/**
+ * Воспользовавшись сопоставлением напечатать номер из поля адрес
+ */
 
 
 
 
 
-  /**
-   * Сопоставление может содержать литералы.
-   * Реализовать Сопоставление на Alex с двумя кейсами.
-   * 1. Имя должно соответствовать Alex
-   * 2. Все остальные
-   */
+/**
+ * Сопоставление может содержать литералы.
+ * Реализовать Сопоставление на Alex с двумя кейсами.
+ * 1. Имя должно соответствовать Alex
+ * 2. Все остальные
+ */
 
 
 
 
-  /**
-   * Паттерны могут содержать условия. В этом случае case сработает,
-   * если и паттерн совпал и условие true.
-   * Условия в Сопоставление называются гардами.
-   */
+/**
+ * Паттерны могут содержать условия. В этом случае case сработает,
+ * если и паттерн совпал и условие true.
+ * Условия в Сопоставление называются гардами.
+ */
 
 
 
-  /**
-   * Реализовать Сопоставление на Alex с двумя кейсами.
-   * 1. Имя должно начинаться с A
-   * 2. Все остальные
-   */
+/**
+ * Реализовать Сопоставление на Alex с двумя кейсами.
+ * 1. Имя должно начинаться с A
+ * 2. Все остальные
+ */
 
 
-  /**
-   *
-   * Мы можем поместить кусок паттерна в переменную использую `as` паттерн,
-   * x @ ..., где x это любая переменная.
-   * Это переменная может использоваться, как в условии,
-   * так и внутри кейса
-   */
+/**
+ *
+ * Мы можем поместить кусок паттерна в переменную использую `as` паттерн,
+ * x @ ..., где x это любая переменная.
+ * Это переменная может использоваться, как в условии,
+ * так и внутри кейса
+ */
 
-    trait PaymentMethod
-    case object Card extends PaymentMethod
-    case object WireTransfer extends PaymentMethod
-    case object Cash extends PaymentMethod
+  trait PaymentMethod
+  case object Card extends PaymentMethod
+  case object WireTransfer extends PaymentMethod
+  case object Cash extends PaymentMethod
 
-    case class Order(paymentMethod: PaymentMethod)
+  case class Order(paymentMethod: PaymentMethod)
 
-    lazy val order: Order = ???
+  lazy val order: Order = ???
 
-    lazy val pm: PaymentMethod = ???
-
-
-    def checkByCard(o: Order) = ???
-
-    def checkOther(o: Order) = ???
+  lazy val pm: PaymentMethod = ???
 
 
+  def checkByCard(o: Order) = ???
 
-  /**
-   * Мы можем использовать вертикальную черту `|` для сопоставления на альтернативы
-   */
+  def checkOther(o: Order) = ???
 
-   sealed trait A
-   case class B(v: Int) extends A
-   case class C(v: Int) extends A
-   case class D(v: Int) extends A
 
-   lazy val a: A = B(10)
 
-   a match {
-     case B(_) | C(_) =>
-     case D(_) =>
-   }
+/**
+ * Мы можем использовать вертикальную черту `|` для сопоставления на альтернативы
+ */
+
+ sealed trait A
+ case class B(v: Int) extends A
+ case class C(v: Int) extends A
+ case class D(v: Int) extends A
+
+ lazy val a: A = B(10)
+
+ a match {
+   case B(_) | C(_) =>
+   case D(_) =>
+ }
 
 
 
