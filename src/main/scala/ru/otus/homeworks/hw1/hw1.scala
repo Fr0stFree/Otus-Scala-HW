@@ -58,7 +58,7 @@ object hw1 {
 
     sealed trait List[+T] {
       def ::[TT >: T](elem: TT): List[TT] =
-        ru.otus.homeworks.hw1.hw1.list :: (elem, this)
+        new ::(elem, this)
     }
 
     case class ::[A](head: A, tail: List[A]) extends List[A]
