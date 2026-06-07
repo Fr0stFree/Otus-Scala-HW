@@ -1,54 +1,44 @@
 package ru.otus.module1
 
-import ru.otus.module1.collections.ListLike
-import ru.otus.module1.collections2.ToyList
+import ru.otus.module1.concurrency.{MyThread, ToyFuture, future, getRatesLocation1, getRatesLocation2, printRunningTime}
+
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 
 object App {
   def main(args: Array[String]): Unit = {
-    println("Hello world")
-    
-    val l1 = ToyList(1, 2, 3)
-    val l2 = ToyList(4, 5, 6)
+    println(s"Hello world from: " +
+      s"${Thread.currentThread().getName}")
 
-    val ll1 = List(1, 2, 3)
-    val ll2 = List(4, 5, 6)
+    given ExecutionContext = future.ec
 
-    val l3 = for{
-      e1 <- l1
-      e2 <- l2
-    } yield e1 + e2
+    val f1 = ToyFuture {
+      Thread.sleep(1000)
+      println("Future 1")
+      10
+    }(executors.pool1)
 
-    val ll3 = for {
-      e1 <- ll1
-      e2 <- ll2
-    } yield e1 + e2
+    val f2 = ToyFuture {
+      Thread.sleep(1000)
+      println("Future 2")
+      20
+    }(executors.pool1)
 
-    val _l3 = l1.flatMap(_ => l2)
-
-   val ll = LazyList(1, 2, 3)
-
-    println(
-      ll.map{v =>
-      println(s"map: ${v}")
-      v + 1
-    }.filter{v =>
-      println(s"Filter: ${v}")
-      v % 2 == 0
-    }.toList
-    )
-
-    println("For List")
-
-    println(
-      ll1.map { v =>
-        println(s"map: ${v}")
-        v + 1
-      }.filter { v =>
-        println(s"Filter: ${v}")
-        v % 2 == 0
+    val f3 = f1.flatMap{v =>
+      f2.map{ v2 =>
+        v + v2
       }
-    )
+    }
 
+    f3.onComplete(println)
+
+//    val r3 = for{
+//      v1 <- future.getRatesLocation1
+//      v2 <- future.getRatesLocation2
+//    } yield v1 + v2
+//
+//    future.printRunningTime(r3).foreach(println)
   }
 }
