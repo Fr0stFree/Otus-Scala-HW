@@ -18,53 +18,48 @@ object type_classes {
 
     case object JsNull extends JsValue
   }
-
+  
   // 1
-
+  
   trait JsonWriter[T] {
     def toJson(v: T): JsValue
   }
-
+  
   object JsonWriter {
-
+    
     def apply[T](using ev: JsonWriter[T]) = ev
-
+    
     def from[T](f: T => JsValue): JsonWriter[T] = new JsonWriter[T] {
-      override def toJson(v: T): JsValue = f(v)
+        override def toJson(v: T): JsValue = f(v)
     }
-
+    
     given JsonWriter[String] = from[String](JsString)
 
     given JsonWriter[Int] = from[Int](JsNumber)
-
+    
     given optJson [T](using jw: JsonWriter[T]): JsonWriter[Option[T]] = from[Option[T]] {
-        case Some(value) => jw.toJson(value)
-        case None => JsNull
-      }
+      case Some(value) => jw.toJson(value)
+      case None => JsNull
+    }
   }
 
   object JsonWriterScala2 {
     def apply[T](implicit ev: JsonWriter[T]) = ev
 
-    implicit val stringJsonWriter: JsonWriter[String] = (value: String) =>
-      JsString(value)
-
-    implicit val intJsonWriter: JsonWriter[Int] = (value: Int) =>
-      JsNumber(value)
-
-    implicit def optJson[T](implicit jw: JsonWriter[T]): JsonWriter[Option[T]] =
-      (opt: Option[T]) =>
-        opt match {
-          case Some(value) => jw.toJson(value)
-          case None        => JsNull
-        }
+    implicit val stringJsonWriter: JsonWriter[String] = (value: String) => JsString(value)
+    implicit val intJsonWriter: JsonWriter[Int] = (value: Int) => JsNumber(value)
+    implicit def optJson[T](implicit jw: JsonWriter[T]): JsonWriter[Option[T]] = (opt: Option[T]) => opt match {
+      case Some(value) => jw.toJson(value)
+      case None => JsNull
+    }
   }
 
-  def toJson[T: JsonWriter](v: T): JsValue = JsonWriter[T].toJson(v)
 
+  def toJson[T: JsonWriter](v: T): JsValue = JsonWriter[T].toJson(v)
+  
   toJson("vffv")
   toJson(10)
-
+  
 //  "fvhfujhubvf".toJson
 //  10.toJson
 //  Option(10).toJson
@@ -105,13 +100,13 @@ object type_classes {
   trait Eq[T]{
     extension (a: T) def ===(b: T): Boolean
   }
-
+  
   object Eq {
     given Eq[String] = new Eq[String] {
       extension (a: String) override def ===(b: String): Boolean = a == b
     }
-  }
-
+  } 
+    
 //  extension [T](a: T)(using eq: Eq[T]){
 //    def ===(b: T): Boolean = eq.===(a, b)
 //  }
