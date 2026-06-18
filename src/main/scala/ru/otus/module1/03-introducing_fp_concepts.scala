@@ -118,7 +118,7 @@ object variance {
   case class Dog() extends Animal
 
   val animalFeeder: Feeder[Animal] = Feeder[Animal]()
-  val catFeeder: Feeder[Cat] = catFeeder
+  val catFeeder: Feeder[Cat] = animalFeeder
   catFeeder.feed(Cat())
 
   def feed(a: Animal): Unit = ???

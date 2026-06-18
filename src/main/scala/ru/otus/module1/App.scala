@@ -33,6 +33,7 @@ object App {
     }
 
     f3.onComplete(println)
+    
 
 //    val r3 = for{
 //      v1 <- future.getRatesLocation1
