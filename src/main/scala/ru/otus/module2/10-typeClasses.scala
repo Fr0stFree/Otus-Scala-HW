@@ -43,6 +43,17 @@ object type_classes {
     }
   }
 
+  object JsonWriterScala2 {
+    def apply[T](implicit ev: JsonWriter[T]) = ev
+
+    implicit val stringJsonWriter: JsonWriter[String] = (value: String) => JsString(value)
+    implicit val intJsonWriter: JsonWriter[Int] = (value: Int) => JsNumber(value)
+    implicit def optJson[T](implicit jw: JsonWriter[T]): JsonWriter[Option[T]] = (opt: Option[T]) => opt match {
+      case Some(value) => jw.toJson(value)
+      case None => JsNull
+    }
+  }
+
 
   def toJson[T: JsonWriter](v: T): JsValue = JsonWriter[T].toJson(v)
   
