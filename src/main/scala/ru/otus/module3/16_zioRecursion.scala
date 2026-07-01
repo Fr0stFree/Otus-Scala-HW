@@ -1,6 +1,6 @@
 package ru.otus.module3
 
-import zio.{Task, Unsafe, ZIO}
+import zio._
 
 import scala.io.StdIn
 
