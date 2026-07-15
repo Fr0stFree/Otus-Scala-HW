@@ -152,7 +152,7 @@ object tryFinally {
      * выведет их в консоль и корректно закроет оба файла
      */
     
-    val twoFiles = ZIO.acquireReleaseWith(openFile("test1.txt"))(closeFile){ f1 =>
+    val twoFiles: ZIO[Any, Throwable, List[Unit]] = ZIO.acquireReleaseWith(openFile("test1.txt"))(closeFile){ f1 =>
       ZIO.acquireReleaseWith(openFile("test2.txt"))(closeFile){ f2 =>
         handleFile(f1) *> handleFile(f2)
       }
