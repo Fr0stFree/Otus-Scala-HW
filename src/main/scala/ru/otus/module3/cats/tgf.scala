@@ -94,7 +94,7 @@ given HttpClient[IO] with
  * ==========================================================
  */
 
-object Main extends IOApp.Simple:
+object Resources extends IOApp.Simple:
 
   override def run: IO[Unit] =
     postFile[IO](
