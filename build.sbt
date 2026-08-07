@@ -21,6 +21,11 @@ libraryDependencies += "dev.zio" %% "zio-config-magnolia"  % "4.0.8"
 libraryDependencies += "dev.zio" %% "zio-config-typesafe"   % "4.0.8"
 libraryDependencies += "dev.zio" %% "zio-config-refined"    % "4.0.8"
 
+// FS2
+libraryDependencies ++= Seq(
+  "co.fs2" %% "fs2-core" % "3.12.2",
+  "co.fs2" %% "fs2-io"   % "3.12.2"
+)
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio-test"          % "2.1.26" % Test,
   "dev.zio" %% "zio-test-sbt"      % "2.1.26" % Test,
