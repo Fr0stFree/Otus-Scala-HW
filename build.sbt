@@ -26,8 +26,22 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "3.12.2",
   "co.fs2" %% "fs2-io"   % "3.12.2"
 )
+val http4sVersion = "0.23.33"
+libraryDependencies ++= Seq(
+  "org.http4s" %% "http4s-ember-server" % http4sVersion,
+  "org.http4s" %% "http4s-ember-client" % http4sVersion,
+  "org.http4s" %% "http4s-dsl"          % http4sVersion,
+  "org.http4s" %% "http4s-circe"        % http4sVersion
+)
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio-test"          % "2.1.26" % Test,
   "dev.zio" %% "zio-test-sbt"      % "2.1.26" % Test,
   "dev.zio" %% "zio-test-magnolia" % "2.1.26" % Test
+)
+
+val circeVersion = "0.14.14"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser"  % circeVersion
 )
