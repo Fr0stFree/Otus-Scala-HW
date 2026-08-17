@@ -8,6 +8,7 @@ import scala.concurrent.{Await, Future}
 // type Reader[R,A] = Kleisli[Id, R, A]
 // Reader R => A
 // Kleisli R=>F[A]
+// Kleisli[F, A, B]
 
 object KleisliReader {
 
@@ -43,7 +44,7 @@ object catsMiddlewareKleisli {
 
   def main(args: Array[String]): Unit = {
     val getUserOrderK: Kleisli[Future, Int, Option[String]] = getUserK.flatMap{
-      case Some(name) => Kleisli.liftF(getOrderK.run(name))
+      case Some(name) => Kleisli.liftF(getOrderK.run(name)) //Kleisli[Future, Int, Option[String]]
       case None => Kleisli.liftF[Future, Int, Option[String]](Future.successful(None))
     }
 
