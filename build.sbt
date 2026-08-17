@@ -58,4 +58,7 @@ libraryDependencies +=
   "io.getquill" %% "quill-jdbc-zio" % "4.6.0.1"
 
 libraryDependencies +=
-  "dev.zio" %% "zio-http" % "3.3.3"
+  "dev.zio" %% "zio-http" % "3.0.1"
+
+libraryDependencies +=
+  "dev.zio" %% "zio-interop-cats" % "23.1.0.3"
