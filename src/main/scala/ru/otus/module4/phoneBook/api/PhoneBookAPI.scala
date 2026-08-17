@@ -1,41 +1,63 @@
 package ru.otus.module4.phoneBook.api
 
-import zhttp.http._
-import zio.ZIO
+import io.circe.parser.decode
 import io.circe.syntax._
+import ru.otus.module4.phoneBook.db.DataSource
 import ru.otus.module4.phoneBook.dto.PhoneRecordDTO
 import ru.otus.module4.phoneBook.services.PhoneBookService
+import ru.otus.module4.phoneBook.services.PhoneBookService.PhoneRecordNotFound
+import zio._
+import zio.http._
+import zio.http.codec.PathCodec.string
 
 object PhoneBookAPI {
 
-  val api = Http.collectZIO[Request]{
-    case Method.GET -> !! / phone =>
-      PhoneBookService.find(phone).foldM(
-        err => ZIO.succeed(Response.status(Status.NotFound)),
-        result => ZIO.succeed(Response.json(result.asJson.toString()))
-      )
-    case req @ Method.POST -> !!  =>
-      (for{
-        r <- req.body
-        dto <- ZIO.fromEither(PhoneRecordDTO.decoder.decodeJson(r.asJson))
-        result <- PhoneBookService.insert(dto)
-      } yield result).foldM(
-        err =>
-          ZIO.effect(println(err.getMessage)) *>
-          ZIO.succeed(Response.status(Status.BadRequest)),
-        result => ZIO.succeed(Response.json(result))
-      )
-    case req @ Method.PUT -> !! / id / addressId => (for{
-        r <- req.bodyAsString
-        dto <- ZIO.fromEither(PhoneRecordDTO.decoder.decodeJson(r.asJson))
-        _ <- PhoneBookService.update(id, addressId, dto)
-        } yield ()).foldM(
-          err => ZIO.succeed(Response.status(Status.BadRequest)),
-          result => ZIO.succeed(Response.ok)
-      )
-    case Method.DELETE -> !! / id => PhoneBookService.delete(id).foldM(
-        err => ZIO.succeed(Response.status(Status.BadRequest)),
-        result => ZIO.succeed(Response.ok)
-      )
-  }
+  private def jsonResponse(json: String, status: Status = Status.Ok): Response =
+    Response(
+      status = status,
+      headers = Headers(Header.ContentType(MediaType.application.json)),
+      body = Body.fromString(json)
+    )
+
+  private def badRequest(message: String): Response =
+    jsonResponse(Map("error" -> message).asJson.noSpaces, Status.BadRequest)
+
+  val api: Routes[PhoneBookService.Service & DataSource, Response] =
+    Routes(
+      Method.GET / string("phone") -> handler { (phone: String, _: Request) =>
+        PhoneBookService
+          .find(phone)
+          .map(result => jsonResponse(result.asJson.noSpaces))
+          .catchAll {
+            case _: PhoneRecordNotFound => ZIO.succeed(Response.status(Status.NotFound))
+            case error                  => ZIO.succeed(badRequest(error.getMessage))
+          }
+      },
+
+      Method.POST / Root -> handler { (req: Request) =>
+        (for {
+          body   <- req.body.asString
+          dto    <- ZIO.fromEither(decode[PhoneRecordDTO](body))
+          result <- PhoneBookService.insert(dto)
+        } yield jsonResponse(Map("id" -> result).asJson.noSpaces, Status.Created))
+          .catchAll(error => ZIO.succeed(badRequest(error.getMessage)))
+      },
+
+      Method.PUT / string("id") / string("addressId") -> handler {
+        (id: String, addressId: String, req: Request) =>
+          (for {
+            body <- req.body.asString
+            dto  <- ZIO.fromEither(decode[PhoneRecordDTO](body))
+            _    <- PhoneBookService.update(id, addressId, dto)
+          } yield Response.ok)
+            .catchAll(error => ZIO.succeed(badRequest(error.getMessage)))
+      },
+
+      Method.DELETE / string("id") -> handler { (id: String, _: Request) =>
+        PhoneBookService
+          .delete(id)
+          .as(Response.ok)
+          .catchAll(error => ZIO.succeed(badRequest(error.getMessage)))
+      }
+    )
 }

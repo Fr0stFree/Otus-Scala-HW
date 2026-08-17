@@ -2,66 +2,65 @@ package ru.otus.module4.phoneBook
 
 import com.zaxxer.hikari.HikariDataSource
 import io.getquill._
-import io.getquill.context.ZioJdbc
 import io.getquill.util.LoadConfig
 import liquibase.Liquibase
 import liquibase.database.jvm.JdbcConnection
-import liquibase.resource.{ClassLoaderResourceAccessor, CompositeResourceAccessor, FileSystemResourceAccessor}
-import ru.otus.module4.phoneBook.configuration.{Config, Configuration}
-import zio.{Has, RIO, URIO, ZIO, ZLayer, ZManaged, _}
-import zio.macros.accessible
+import liquibase.resource.ClassLoaderResourceAccessor
+import ru.otus.module4.phoneBook.configuration.Config
+import zio._
 
 package object db {
 
-  type DataSource = Has[javax.sql.DataSource]
+  type DataSource = javax.sql.DataSource
 
   object Ctx extends PostgresZioJdbcContext(NamingStrategy(Escape, Literal))
 
-  def hikariDS: HikariDataSource = new JdbcContextConfig(LoadConfig("db")).dataSource
+  def hikariDS: HikariDataSource =
+    new JdbcContextConfig(LoadConfig("db")).dataSource
 
-  val zioDS: ZLayer[Any, Throwable, DataSource] = 
-    ZioJdbc.DataSourceLayer.fromDataSource(hikariDS)
+  val zioDS: ZLayer[Any, Throwable, DataSource] =
+    ZLayer.scoped {
+      ZIO.acquireRelease(
+        ZIO.attempt(hikariDS).map(ds => ds: DataSource)
+      ) {
+        case ds: HikariDataSource => ZIO.attempt(ds.close()).orDie
+        case _                    => ZIO.unit
+      }
+    }
 
-
-
-  @accessible
   object LiquibaseService {
 
-    type LiquibaseService = Has[Service]
-
-    type Liqui = Has[Liquibase]
-
     trait Service {
-      def performMigration: RIO[Liqui, Unit]
+      def performMigration: ZIO[Liquibase, Throwable, Unit]
     }
 
-    class Impl extends Service {
-
-      override def performMigration: RIO[Liqui, Unit] = liquibase.map(_.update("dev"))
+    final class Impl extends Service {
+      override def performMigration: ZIO[Liquibase, Throwable, Unit] =
+        ZIO.serviceWithZIO[Liquibase] { liquibase =>
+          ZIO.attempt(liquibase.update("dev"))
+        }
     }
-     
-    def mkLiquibase(config: Config): ZManaged[DataSource, Throwable, Liquibase] = for {
-      ds <- ZIO.environment[DataSource].map(_.get).toManaged_
-      fileAccessor <-  ZIO.effect(new FileSystemResourceAccessor()).toManaged_
-      classLoader <- ZIO.effect(classOf[LiquibaseService].getClassLoader).toManaged_
-      classLoaderAccessor <- ZIO.effect(new ClassLoaderResourceAccessor(classLoader)).toManaged_
-      fileOpener <- ZIO.effect(new CompositeResourceAccessor(fileAccessor, classLoaderAccessor)).toManaged_
-      jdbcConn <- ZManaged.makeEffect(new JdbcConnection(ds.getConnection()))(c => c.close())
-      liqui <- ZIO.effect(new Liquibase(config.liquibase.changeLog, fileOpener, jdbcConn)).toManaged_
-    } yield liqui
 
+    def performMigration: ZIO[Service & Liquibase, Throwable, Unit] =
+      ZIO.serviceWithZIO[Service](_.performMigration)
 
-    val liquibaseLayer: ZLayer[Configuration with DataSource, Throwable, Liqui] = ZLayer.fromManaged(
-      for {
-        config <- zio.config.getConfig[Config].toManaged_
-        liquibase <- mkLiquibase(config)
-      } yield (liquibase)
-    )
+    val live: ULayer[Service] =
+      ZLayer.succeed(new Impl)
 
-
-    def liquibase: URIO[Liqui, Liquibase] = ZIO.service[Liquibase]
-
-    val live: ULayer[LiquibaseService] = ZLayer.succeed(new Impl)
-
+    val liquibaseLayer: ZLayer[Config & DataSource, Throwable, Liquibase] =
+      ZLayer.scoped {
+        for {
+          config <- ZIO.service[Config]
+          ds     <- ZIO.service[DataSource]
+          conn   <- ZIO.acquireRelease(ZIO.attempt(ds.getConnection))(c => ZIO.attempt(c.close()).orDie)
+          jdbc    = new JdbcConnection(conn)
+          accessor <- ZIO.acquireRelease(
+            ZIO.attempt(new ClassLoaderResourceAccessor())
+          )(a => ZIO.attempt(a.close()).orDie)
+          liquibase <- ZIO.acquireRelease(
+            ZIO.attempt(new Liquibase(config.liquibase.changeLog, accessor, jdbc))
+          )(_ => ZIO.unit)
+        } yield liquibase
+      }
   }
 }

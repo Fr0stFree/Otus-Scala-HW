@@ -1,32 +1,43 @@
 package ru.otus.module4.phoneBook.dao.repositories
 
-import zio.Has
+import io.getquill._
 import io.getquill.context.ZioJdbc._
 import ru.otus.module4.phoneBook.dao.entities.Address
-import zio.{ULayer, ZLayer}
 import ru.otus.module4.phoneBook.db
+import zio.{ULayer, ZLayer}
 
 object AddressRepository {
-  type AddressRepository = Has[Service]
-  
   import db.Ctx._
 
-  trait Service{
-      def findBy(id: String): QIO[Option[Address]]
-      def insert(phoneRecord: Address): QIO[Unit]
-      def update(phoneRecord: Address): QIO[Unit]
-      def delete(id: String): QIO[Unit]
+  type AddressRepository = Service
+
+  trait Service {
+    def findBy(id: String): QIO[Option[Address]]
+    def insert(address: Address): QIO[Unit]
+    def update(address: Address): QIO[Unit]
+    def delete(id: String): QIO[Unit]
   }
 
-  class ServiceImpl extends Service{
+  final class ServiceImpl extends Service {
+    inline def addressSchema = quote {
+      querySchema[Address]("Address")
+    }
 
-      def findBy(id: String): QIO[Option[Address]] = ???
-      def insert(address: Address): QIO[Unit] = ???
-      def update(address: Address): QIO[Unit] = ???
-      
-      def delete(id: String): QIO[Unit] = ???
-      
+    override def findBy(id: String): QIO[Option[Address]] =
+      db.Ctx.run(addressSchema.filter(_.id == lift(id)).take(1)).map(_.headOption)
+
+    override def insert(address: Address): QIO[Unit] =
+      db.Ctx.run(addressSchema.insertValue(lift(address))).unit
+
+    override def update(address: Address): QIO[Unit] =
+      db.Ctx
+        .run(addressSchema.filter(_.id == lift(address.id)).updateValue(lift(address)))
+        .unit
+
+    override def delete(id: String): QIO[Unit] =
+      db.Ctx.run(addressSchema.filter(_.id == lift(id)).delete).unit
   }
 
-  val live: ULayer[AddressRepository] = ZLayer.succeed(new ServiceImpl)
+  val live: ULayer[Service] =
+    ZLayer.succeed(new ServiceImpl)
 }

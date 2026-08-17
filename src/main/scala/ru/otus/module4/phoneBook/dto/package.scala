@@ -27,8 +27,9 @@ package object dto {
     object IdVar{
         def unapply(str: String): Option[RecordId] = {
             Try(str.toInt) match {
-                case Failure(_) => None
+                case Failure(_)                  => None
                 case Success(value) if value < 0 => None
+                case Success(value)              => Some(RecordId(value))
             }
         }
     }
