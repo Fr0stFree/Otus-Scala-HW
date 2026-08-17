@@ -62,3 +62,10 @@ libraryDependencies +=
 
 libraryDependencies +=
   "dev.zio" %% "zio-interop-cats" % "23.1.0.3"
+
+val testcontainersScalaVersion = "0.43.0"
+
+libraryDependencies ++= Seq(
+  "com.dimafeng" %% "testcontainers-scala-core"       % testcontainersScalaVersion % Test,
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testcontainersScalaVersion % Test
+)
