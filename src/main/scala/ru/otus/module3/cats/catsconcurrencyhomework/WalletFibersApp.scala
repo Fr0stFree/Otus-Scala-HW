@@ -2,6 +2,7 @@ package ru.otus.module3.cats.catsconcurrencyhomework
 
 import cats.effect.{IO, IOApp}
 import cats.implicits._
+import scala.concurrent.duration._
 
 // Поиграемся с кошельками на файлах и файберами.
 
@@ -18,13 +19,38 @@ import cats.implicits._
 // def loop(): IO[Unit] = IO.println("hello").flatMap(_ => loop())
 object WalletFibersApp extends IOApp.Simple {
 
+  private def topUpLoop(wallet: Wallet[IO], amount: BigDecimal, delay: Long): IO[Unit] = {
+    for {
+      _ <- IO.sleep(delay.millis)
+      _ <- wallet.topup(amount)
+      _ <- topUpLoop(wallet, amount, delay)
+    } yield ()
+  }
+
+  private def printBalancesLoop(wallets: Seq[Wallet[IO]]): IO[Unit] = {
+    for {
+      _ <- IO.sleep(1.second)
+      balances <- wallets.traverse(_.balance)
+      _ <- IO.println(s"Balances: ${balances.mkString(", ")}")
+      _ <- printBalancesLoop(wallets)
+    } yield ()
+  }
+
   def run: IO[Unit] =
     for {
       _ <- IO.println("Press any key to stop...")
       wallet1 <- Wallet.fileWallet[IO]("1")
       wallet2 <- Wallet.fileWallet[IO]("2")
       wallet3 <- Wallet.fileWallet[IO]("3")
-      // todo: запустить все файберы и ждать ввода от пользователя чтобы завершить работу
+      
+      fiber1 <- topUpLoop(wallet1, 100, 100).start
+      fiber2 <- topUpLoop(wallet2, 100, 500).start
+      fiber3 <- topUpLoop(wallet3, 100, 2000).start
+      fiberPrint <- printBalancesLoop(Seq(wallet1, wallet2, wallet3)).start
+
+      _ <- IO.readLine
+
+      _ <- Seq(fiber1, fiber2, fiber3, fiberPrint).traverse(_.cancel)
     } yield ()
 
 }
