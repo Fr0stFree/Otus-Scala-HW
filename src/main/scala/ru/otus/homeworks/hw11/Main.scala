@@ -7,7 +7,7 @@ import ru.otus.homeworks.hw11.Domain.*
 object Main {
   def main(args: Array[String]): Unit = {
     val calculatorId = UUID.randomUUID()
-    val startedAt = Instant.parse("2026-09-06T10:00:00Z")
+    val startedAt = Instant.now()
     val payloads = Seq(
       CalculatorInitialized(BigDecimal(0)),
       OperationSucceeded(Operation.Add, BigDecimal(10), BigDecimal(10)),
