@@ -1,8 +1,8 @@
-package ru.otus.homeworks.hw11
+package ru.otus.homeworks.hw12
 
 import java.time.Instant
 import java.util.UUID
-import ru.otus.homeworks.hw11.Domain.*
+import ru.otus.homeworks.hw12.Domain.*
 
 object Main {
   def main(args: Array[String]): Unit = {
